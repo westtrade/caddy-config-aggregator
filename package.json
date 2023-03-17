@@ -1,0 +1,22 @@
+{
+	"name": "@westtrade/caristo-config-watcher",
+	"version": "1.0.1",
+	"main": "./src/cli.js",
+	"author": "Gennadiy Popov <gennadiy.popov.87@yandex.ru>",
+	"license": "MIT",
+	"dependencies": {
+		"chokidar": "^3.5.3",
+		"commander": "^10.0.0",
+		"debounce-collect": "^1.0.2",
+		"dotenv": "^16.0.3",
+		"ensure-fs": "^1.0.3",
+		"glob": "^9.3.0",
+		"lodash.debounce": "^4.0.8",
+		"rimraf": "^4.4.0",
+		"winston": "^3.8.2"
+	},
+	"bin": "./.bin/cli.js",
+	"scripts": {
+		"build": "pkg --out-path dist  --compress GZip ."
+	}
+}

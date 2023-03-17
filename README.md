@@ -1,0 +1,3 @@
+# Caddy Config Aggregator
+
+Caddy Config Aggregator is a software program designed to manage and aggregate multiple configurations for the Caddy web server. With this tool, users can easily manage and organize their Caddy configurations, making it easier to deploy and maintain their web applications in Docker or Podman containers. The Caddy Config Aggregator also provides a user-friendly interface that simplifies the process of managing complex configurations, making it accessible even for users with limited technical knowledge. Overall, this program is an essential tool for anyone looking to streamline their Caddy configuration management process.
