@@ -1,6 +1,7 @@
 {
-	"name": "@westtrade/caristo-config-watcher",
+	"name": "@westtrade/caddy-config-aggregator",
 	"version": "1.0.1",
+	"description": "Is a software program designed to manage and aggregate multiple configurations for the Caddy.",
 	"main": "./src/cli.js",
 	"author": "Gennadiy Popov <gennadiy.popov.87@yandex.ru>",
 	"license": "MIT",
@@ -9,14 +10,16 @@
 		"commander": "^10.0.0",
 		"debounce-collect": "^1.0.2",
 		"dotenv": "^16.0.3",
-		"ensure-fs": "^1.0.3",
 		"glob": "^9.3.0",
-		"lodash.debounce": "^4.0.8",
+		"lodash.throttle": "^4.1.1",
 		"rimraf": "^4.4.0",
 		"winston": "^3.8.2"
 	},
 	"bin": "./.bin/cli.js",
 	"scripts": {
 		"build": "pkg --out-path dist  --compress GZip ."
+	},
+	"devDependencies": {
+		"pkg": "^5.8.1"
 	}
 }
