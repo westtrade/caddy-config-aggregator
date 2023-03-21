@@ -8,18 +8,28 @@
 	"dependencies": {
 		"chokidar": "^3.5.3",
 		"commander": "^10.0.0",
+		"dayjs": "^1.11.7",
 		"debounce-collect": "^1.0.2",
 		"dotenv": "^16.0.3",
 		"glob": "^9.3.0",
+		"lodash.merge": "^4.6.2",
 		"lodash.throttle": "^4.1.1",
 		"rimraf": "^4.4.0",
 		"winston": "^3.8.2"
 	},
 	"bin": "./.bin/cli.js",
 	"scripts": {
-		"build": "pkg --out-path dist  --compress GZip ."
+		"build": "pkg --out-path dist  --compress GZip .",
+		"start": "node ./src/cli.js",
+		"test": "jest",
+		"tdd": "jest --watchAll"
 	},
 	"devDependencies": {
+		"jest": "^29.5.0",
 		"pkg": "^5.8.1"
+	},
+	"volta": {
+		"node": "19.8.1",
+		"yarn": "3.5.0"
 	}
 }
