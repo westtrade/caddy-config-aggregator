@@ -4,7 +4,7 @@ const { exec } = require("node:child_process");
 const path = require("node:path");
 const { program } = require("commander");
 const process = require("process");
-const configWatcher = require("./configWatcher");
+const { configWatcher } = require("./configWatcher");
 
 program
 	.version(version)
