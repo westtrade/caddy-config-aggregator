@@ -4,7 +4,7 @@ const fs = require("node:fs/promises");
 const { default: rimraf } = require("rimraf");
 const { inspect } = require("node:util");
 const merge = require("lodash.merge");
-const { configWatcher } = require("../src/configWatcher");
+const { configWatcher, callbackExecutor } = require("../src/configWatcher");
 
 const ROOT_PATH = path.resolve(__dirname, "../test-data");
 const ROOT_CONFIG_OUT_PATH = path.resolve(ROOT_PATH, "out");
@@ -234,7 +234,11 @@ describe("Config watcher", () => {
 	let watcher = null;
 	beforeAll(async () => {
 		await initializeDefaultFileStructure();
-		watcher = configWatcher(ROOT_LOCAL_CONFIGS_PATH, ROOT_CONFIG_OUT_PATH);
+		watcher = configWatcher(
+			ROOT_LOCAL_CONFIGS_PATH,
+			ROOT_CONFIG_OUT_PATH,
+			callbackExecutor("docker ps")
+		);
 	});
 
 	it("should global settings settings by local at startup", async () => {

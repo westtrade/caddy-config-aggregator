@@ -4,7 +4,7 @@ const { exec } = require("node:child_process");
 const path = require("node:path");
 const { program } = require("commander");
 const process = require("process");
-const { configWatcher } = require("./configWatcher");
+const { configWatcher, callbackExecutor } = require("./configWatcher");
 
 program
 	.version(version)
@@ -38,23 +38,11 @@ program
 		});
 
 		try {
-			await configWatcher(websitesPath, configPath, async () => {
-				if (options.callback) {
-					exec(
-						callback,
-						{
-							cwd: process.cwd(),
-						},
-						(err, stdout, stderr) => {
-							if (err) {
-								logger.error(err);
-							} else {
-								logger.info("Command result: ", { stdout, stderr });
-							}
-						}
-					);
-				}
-			});
+			await configWatcher(
+				websitesPath,
+				configPath,
+				callbackExecutor(options.callback)
+			);
 		} catch (error) {
 			logger.error(error);
 		}

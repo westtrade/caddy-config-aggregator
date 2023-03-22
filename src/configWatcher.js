@@ -7,6 +7,26 @@ const { logger } = require("./logger");
 const fs = require("node:fs/promises");
 const dotenv = require("dotenv");
 const rimraf = require("rimraf");
+const process = require("process");
+const { exec } = require("node:child_process");
+
+const callbackExecutor = (callback) => async () => {
+	if (callback) {
+		exec(
+			callback,
+			{
+				cwd: process.cwd(),
+			},
+			(err, stdout, stderr) => {
+				if (err) {
+					logger.error(err);
+				} else {
+					logger.info("Command result: ", { stdout, stderr });
+				}
+			}
+		);
+	}
+};
 
 const configWatcher = (rootPath, resultPath, onChange) => {
 	const watcher = {
@@ -191,4 +211,5 @@ const configWatcher = (rootPath, resultPath, onChange) => {
 
 module.exports = {
 	configWatcher,
+	callbackExecutor,
 };
