@@ -234,10 +234,14 @@ describe("Config watcher", () => {
 	let watcher = null;
 	beforeAll(async () => {
 		await initializeDefaultFileStructure();
+		const command = `
+			caddy_container_id=$(docker ps | grep caddy_web | awk '{print $1;}')
+			docker exec $caddy_container_id reload --config /etc/caddy/Caddyfile --adapter caddyfile
+		`;
 		watcher = configWatcher(
 			ROOT_LOCAL_CONFIGS_PATH,
 			ROOT_CONFIG_OUT_PATH,
-			callbackExecutor("docker ps")
+			callbackExecutor(command)
 		);
 	});
 
