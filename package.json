@@ -1,12 +1,12 @@
 {
 	"name": "@westtrade/caddy-config-aggregator",
-	"version": "1.0.3",
+	"version": "1.0.4",
 	"description": "Is a software program designed to manage and aggregate multiple configurations for the Caddy.",
 	"main": "./src/cli.js",
 	"author": "Gennadiy Popov <gennadiy.popov.87@yandex.ru>",
 	"license": "MIT",
 	"dependencies": {
-		"chokidar": "^3.5.3",
+		"@parcel/watcher": "^2.1.0",
 		"commander": "^10.0.0",
 		"dayjs": "^1.11.7",
 		"debounce-collect": "^1.0.2",

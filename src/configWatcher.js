@@ -1,4 +1,3 @@
-const chokidar = require("chokidar");
 const path = require("node:path");
 const { glob } = require("glob");
 const throttle = require("lodash.throttle");
@@ -9,6 +8,11 @@ const dotenv = require("dotenv");
 const rimraf = require("rimraf");
 const process = require("process");
 const { exec } = require("node:child_process");
+
+const watcher = require("@parcel/watcher");
+const merge = require("lodash.merge");
+const { readFile } = require("node:fs/promises");
+const { makeFsStructure } = require("./blueprintFS");
 
 const callbackExecutor = (callback) =>
 	throttle(async () => {
@@ -29,185 +33,136 @@ const callbackExecutor = (callback) =>
 		}
 	}, 500);
 
+const localToCommonVariableNameReducer = (result, [key, value]) => {
+	const perfixedKey = `${result.envPrefix}_${key}`.replace(/ /, "_");
+	result.variables[perfixedKey] = value;
+	result.replaces[key] = perfixedKey;
+
+	return result;
+};
+
 const configWatcher = (rootPath, resultPath, onChange) => {
-	const watcher = {
-		allFiles: {},
+	let initialResolve;
+	const watcherController = {
+		configFS: {},
 		filesWatcher: undefined,
 		rootWatcher: undefined,
+		status: new Promise((resolve) => (initialResolve = resolve)),
 	};
 
-	const filesChangesHandler = debounceCollect(async (events) => {
+	const searchAndAggregateConfig = throttle(async () => {
 		try {
-			logger.info(
-				"Files: " +
-					events
-						.map(([eventType, filePath]) => {
-							return `${eventType}: ${filePath};`;
-						})
-						.join("\n")
-			);
+			const configurationFiles = await glob([
+				path.resolve(rootPath, "./**/current/docker/caddy/Caddyfile"),
+			]);
 
-			watcher.allFiles = events.reduce((result, [eventType, filePath]) => {
-				const [fileRoot, fileRelativePath] = filePath.split("current");
-				const fileBase = path.basename(fileRelativePath);
+			const newConfigFSStructure = await configurationFiles.reduce(
+				async (resultPromise, caddyFilePath) => {
+					const configFS = await resultPromise;
 
-				return {
-					...result,
-					[fileRoot]: {
-						...(result[fileRoot] || {}),
-						[fileBase]: [eventType, filePath],
-					},
-				};
-			}, watcher.allFiles);
+					const rootPath = caddyFilePath.split("current").at(0);
 
-			const currentConfigs = Object.entries(watcher.allFiles).reduce(
-				(
-					result,
-					[root, { [".env"]: envFile, ["Caddyfile"]: caddyfile } = {}]
-				) => {
-					const status =
-						envFile[0] === "unlink" || caddyfile[0] === "unlink"
-							? "unlink"
-							: "exists";
+					const envFilePath = path.resolve(rootPath, "current/.env");
+					let envFileAccess = false;
 
-					return [...result, [root, status, envFile[1], caddyfile[1]]];
-				},
-				[]
-			);
-			let environment = {};
-
-			await Promise.all(
-				currentConfigs.map(
-					async ([root, status, envFilePath, caddyFilePath]) => {
-						const websiteBase = path.basename(root);
-						const configPath = path.resolve(resultPath, websiteBase);
-						const caddyFileOutPath = path.resolve(configPath, "Caddyfile");
-
-						if (status === "exists") {
-							await fs.mkdir(configPath, { recursive: true });
-							let caddyConfigContent = await fs.readFile(
-								caddyFilePath,
-								"utf-8"
-							);
-							const envFileContent = await fs.readFile(envFilePath, "utf-8");
-							const environmentPrefix = websiteBase
-								.toUpperCase()
-								.replace(/[\.-]/, "_");
-
-							const localEnvironment = Object.entries(
-								dotenv.parse(envFileContent)
-							).reduce(
-								(result, [key, value]) => {
-									const perfixedKey = `${environmentPrefix}_${key}`;
-									result.variables[perfixedKey] = value;
-									result.replaces[key] = perfixedKey;
-									return result;
-								},
-								{
-									variables: {},
-									replaces: {},
-								}
-							);
-
-							caddyConfigContent = Object.entries(
-								localEnvironment.replaces
-							).reduce(
-								(result, [key, replaceTo]) => result.replaceAll(key, replaceTo),
-								caddyConfigContent
-							);
-
-							environment = {
-								...environment,
-								[`---${environmentPrefix}---`]: [
-									environmentPrefix,
-									envFilePath,
-								],
-								...localEnvironment.variables,
-							};
-
-							await fs.writeFile(caddyFileOutPath, caddyConfigContent, "utf-8");
-						} else {
-							await rimraf(configPath);
-						}
-					}
-				)
-			);
-
-			const envFileContent = Object.entries(environment).reduce(
-				(result, [key, value]) => {
-					if (key.startsWith("---")) {
-						const [envPrefix, envPath] = value;
-						result = `${result}\n\n# ------------------------- ${envPrefix} -------------------------`;
-						result = `${result}\n# file: ${envPath}\n`;
-					} else {
-						result = `${result}\n${key}=${value}`;
+					try {
+						await fs.access(envFilePath, fs.constants.R_OK);
+						envFileAccess = true;
+					} catch (error) {
+						envFileAccess = false;
+						logger.error(error);
 					}
 
-					return result;
+					const websiteBase = path.basename(rootPath);
+					const caddyFileContent = await fs.readFile(caddyFilePath, "utf-8");
+
+					configFS[".env"] = configFS[".env"] || {
+						"#type": "file",
+						"#content": "",
+					};
+
+					configFS[websiteBase] = {
+						Caddyfile: {
+							"#type": "file",
+							"#content": caddyFileContent,
+						},
+					};
+
+					if (envFileAccess) {
+						const envFileContent = await fs.readFile(envFilePath, "utf-8");
+						const envPrefix = websiteBase.toUpperCase().replace(/[\.-]/, "_");
+						const websiteEnvironment = dotenv.parse(envFileContent);
+
+						const caddyEnvironment = Object.entries(websiteEnvironment).reduce(
+							localToCommonVariableNameReducer,
+							{
+								replaces: {},
+								variables: {},
+								envPrefix,
+							}
+						);
+
+						configFS[websiteBase].Caddyfile["#content"] = Object.entries(
+							caddyEnvironment.replaces
+						).reduce(
+							(result, [key, replaceTo]) => result.replaceAll(key, replaceTo),
+							caddyFileContent
+						);
+
+						const resultEnvFilecontent = Object.entries(
+							caddyEnvironment.variables
+						).reduce(
+							(result, [key, value]) => `${result}\n${key}=${value}`,
+							`# ------------------------- ${envPrefix} -------------------------
+# file: ${envFilePath}`
+						);
+
+						configFS[".env"][
+							"#content"
+						] = `${configFS[".env"]["#content"]}\n${resultEnvFilecontent}\n\n`;
+					}
+
+					return configFS;
 				},
-				""
+				Promise.resolve({})
 			);
 
-			await fs.writeFile(
-				path.resolve(resultPath, ".env"),
-				envFileContent,
-				"utf-8"
-			);
-
-			if (onChange) {
-				await onChange();
-			}
+			const result = await makeFsStructure(resultPath, newConfigFSStructure);
+			logger.info(`update: ${JSON.stringify(result, null, "\t")}`);
 		} catch (error) {
 			logger.error(error);
 		}
-	}, 100);
 
-	const rootWatcherFiles = [path.resolve(rootPath, "./**/current")];
-	watcher.rootWatcher = chokidar.watch(rootWatcherFiles, {
-		persistent: true,
-		ignoreInitial: false,
-		followSymlinks: true,
-		depth: 1,
-		ignore: "node_modules/**",
-	});
-
-	const startRootWatching = throttle(async () => {
-		const watchFiles = await glob([
-			path.resolve(rootPath, "./**/current"),
-			path.resolve(rootPath, "./**/current/docker/caddy/Caddyfile"),
-			path.resolve(rootPath, "./**/current/.env"),
-		]);
-
-		if (watcher.filesWatcher) {
-			watcher.filesWatcher.close();
-			watcher.filesWatcher = undefined;
+		if (onChange) {
+			await onChange();
 		}
+	}, 500);
 
-		watcher.filesWatcher = chokidar.watch(watchFiles, {
-			persistent: true,
-			depth: 2,
-			ignore: "node_modules/**",
-		});
+	searchAndAggregateConfig();
 
-		watcher.filesWatcher.on("all", filesChangesHandler);
-	}, 300);
+	watcherController.start = async () => {
+		watcherController.rootWatcher = await watcher.subscribe(
+			rootPath,
+			searchAndAggregateConfig
+		);
 
-	watcher.rootWatcher.on("all", startRootWatching);
-
-	watcher.close = function () {
-		startRootWatching.cancel();
-		if (this.rootWatcher) {
-			this.rootWatcher.close();
-			this.rootWatcher = undefined;
+		if (initialResolve) {
+			initialResolve(true);
+			initialResolve = null;
 		}
+	};
 
-		if (this.fileWatcher) {
-			this.filesWatcher.close();
-			this.filesWatcher = undefined;
+	watcherController.start();
+
+	watcherController.close = async () => {
+		const { rootWatcher } = watcherController;
+		if (rootWatcher) {
+			await rootWatcher.unsubscribe();
+			watcherController.rootWatcher = undefined;
 		}
-	}.bind(watcher);
+	};
 
-	return watcher;
+	return watcherController;
 };
 
 module.exports = {
