@@ -128,7 +128,13 @@ const configWatcher = (rootPath, resultPath, onChange) => {
 			);
 
 			const result = await makeFsStructure(resultPath, newConfigFSStructure);
-			logger.info(`update: ${JSON.stringify(result, null, "\t")}`);
+			logger.info(
+				`update: [${result
+					.map((sitePath) =>
+						sitePath.replace(resultPath, "").replace(/^\//, "")
+					)
+					.join(", ")}]`
+			);
 		} catch (error) {
 			logger.error(error);
 		}
