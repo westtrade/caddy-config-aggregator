@@ -1,6 +1,6 @@
 {
 	"name": "@westtrade/caddy-config-aggregator",
-	"version": "1.0.4",
+	"version": "1.0.5",
 	"description": "Is a software program designed to manage and aggregate multiple configurations for the Caddy.",
 	"main": "./src/cli.js",
 	"author": "Gennadiy Popov <gennadiy.popov.87@yandex.ru>",

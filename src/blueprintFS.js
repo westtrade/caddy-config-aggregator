@@ -69,7 +69,7 @@ const applySettingsToPath = async (targetPath, settings = {}) => {
 
 		case "directory":
 			if (settings.clear) {
-				await rimraf(targetPath, {
+				await rimraf(path.join(targetPath, "./*"), {
 					preserveRoot: true,
 				});
 			}
