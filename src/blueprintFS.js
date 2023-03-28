@@ -69,7 +69,9 @@ const applySettingsToPath = async (targetPath, settings = {}) => {
 
 		case "directory":
 			if (settings.clear) {
-				await rimraf(path.resolve(targetPath, "./*"));
+				await rimraf(targetPath, {
+					preserveRoot: true,
+				});
 			}
 
 			await fs.mkdir(targetPath, { recursive: true });
