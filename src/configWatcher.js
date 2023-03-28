@@ -41,6 +41,8 @@ const localToCommonVariableNameReducer = (result, [key, value]) => {
 	return result;
 };
 
+let prevConfigCount = -1;
+
 const configWatcher = (rootPath, resultPath, onChange) => {
 	let initialResolve;
 	const watcherController = {
@@ -55,6 +57,12 @@ const configWatcher = (rootPath, resultPath, onChange) => {
 			const configurationFiles = await glob([
 				path.resolve(rootPath, "./**/current/docker/caddy/Caddyfile"),
 			]);
+
+			if (prevConfigCount === 0 && configurationFiles.length === 0) {
+				return;
+			}
+
+			prevConfigCount = configurationFiles.length;
 
 			const newConfigFSStructure = await configurationFiles.reduce(
 				async (resultPromise, caddyFilePath) => {
@@ -124,7 +132,9 @@ const configWatcher = (rootPath, resultPath, onChange) => {
 
 					return configFS;
 				},
-				Promise.resolve({})
+				Promise.resolve({
+					"#clear": true,
+				})
 			);
 
 			const result = await makeFsStructure(resultPath, newConfigFSStructure);
