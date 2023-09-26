@@ -11,13 +11,19 @@ program
 	.argument("[input]", "Caristo websites path")
 	.argument("[output]", "Caddy output folder")
 	.option(
-		`-i, --input, <char> Caristo websites path (default: ${process.cwd()}/data)`
+		`-i, --input, <char> Caristo websites path (default: ${path.resolve(
+			process.cwd(),
+			"data"
+		)})`
 	)
 	.option(
-		`-o, --output, <char> Caddy output folder (default: ${process.cwd()}/out)`
+		`-o, --output, <char> Caddy output folder (default:  ${path.resolve(
+			process.cwd(),
+			"out"
+		)})`
 	)
 	.option(`-c, --callback, <char> Callback (default: None)`)
-	.option(`-l, --level, <char> Logger level (default: )`)
+	.option(`-l, --level, <char> Logger level (default: "")`)
 	.action(async (input, output, options) => {
 		const websitesPath = path.resolve(
 			process.cwd(),
