@@ -1,21 +1,21 @@
 {
 	"name": "@westtrade/caddy-config-aggregator",
-	"version": "1.0.5",
+	"version": "1.0.6",
 	"description": "Is a software program designed to manage and aggregate multiple configurations for the Caddy.",
 	"main": "./src/cli.js",
 	"author": "Gennadiy Popov <gennadiy.popov.87@yandex.ru>",
 	"license": "MIT",
 	"dependencies": {
-		"@parcel/watcher": "^2.1.0",
-		"commander": "^10.0.0",
-		"dayjs": "^1.11.7",
+		"@parcel/watcher": "^2.3.0",
+		"commander": "^11.0.0",
+		"dayjs": "^1.11.10",
 		"debounce-collect": "^1.0.2",
-		"dotenv": "^16.0.3",
-		"glob": "^9.3.0",
+		"dotenv": "^16.3.1",
+		"glob": "^10.3.9",
 		"lodash.merge": "^4.6.2",
 		"lodash.throttle": "^4.1.1",
-		"rimraf": "^4.4.0",
-		"winston": "^3.8.2"
+		"rimraf": "^5.0.4",
+		"winston": "^3.10.0"
 	},
 	"bin": "./.bin/cli.js",
 	"scripts": {
@@ -25,8 +25,9 @@
 		"tdd": "jest --watchAll"
 	},
 	"devDependencies": {
-		"jest": "^29.5.0",
-		"pkg": "^5.8.1"
+		"jest": "^29.7.0",
+		"pkg": "^5.8.1",
+		"prettier": "^3.0.3"
 	},
 	"volta": {
 		"node": "18.15.0",

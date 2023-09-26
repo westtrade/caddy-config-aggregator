@@ -1,4 +1,4 @@
-const { createLogger, format, transports, config } = require("winston");
+const { createLogger, format, transports } = require("winston");
 
 let logger = createLogger({
 	format: format.combine(

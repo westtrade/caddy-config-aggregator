@@ -1,5 +1,5 @@
 const fs = require("node:fs/promises");
-const { default: rimraf } = require("rimraf");
+const {  rimraf } = require("rimraf");
 const path = require("node:path");
 
 const SETTINGS_STARTS_REGEXP = /^#/;

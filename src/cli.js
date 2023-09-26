@@ -1,6 +1,5 @@
 const { version } = require("../package.json");
 const { logger, setLogLevel } = require("./logger");
-const { exec } = require("node:child_process");
 const path = require("node:path");
 const { program } = require("commander");
 const process = require("process");

@@ -1,17 +1,12 @@
 const path = require("node:path");
 const { glob } = require("glob");
 const throttle = require("lodash.throttle");
-const debounceCollect = require("debounce-collect");
 const { logger } = require("./logger");
 const fs = require("node:fs/promises");
 const dotenv = require("dotenv");
-const rimraf = require("rimraf");
 const process = require("process");
 const { exec } = require("node:child_process");
-
 const watcher = require("@parcel/watcher");
-const merge = require("lodash.merge");
-const { readFile } = require("node:fs/promises");
 const { makeFsStructure } = require("./blueprintFS");
 
 const callbackExecutor = (callback) =>
@@ -47,7 +42,6 @@ const configWatcher = (rootPath, resultPath, onChange) => {
 	let initialResolve;
 	const watcherController = {
 		configFS: {},
-		filesWatcher: undefined,
 		rootWatcher: undefined,
 		status: new Promise((resolve) => (initialResolve = resolve)),
 	};
@@ -159,7 +153,20 @@ const configWatcher = (rootPath, resultPath, onChange) => {
 	watcherController.start = async () => {
 		watcherController.rootWatcher = await watcher.subscribe(
 			rootPath,
-			searchAndAggregateConfig
+			searchAndAggregateConfig,
+			{
+				ignore: [
+					"node_modules",
+					"logs",
+					"*log",
+					".cache",
+					".parcel-cache",
+					"dist",
+					"public",
+					".yarn",
+					"test-data",
+				],
+			}
 		);
 
 		if (initialResolve) {
